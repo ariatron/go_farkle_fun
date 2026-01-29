@@ -9,6 +9,7 @@ import (
 
 // GameState tracks the active game in memory
 type GameState struct {
+	PlayerName string     `json:"player_name"` // Player's name
 	Turn       *game.Turn `json:"turn"`
 	LastRoll   []int      `json:"last_roll"`
 	TotalBank  int        `json:"total_bank"`
@@ -26,6 +27,11 @@ var currentGameState = &GameState{
 // KeepRequest receives the dice values the user wants to score
 type KeepRequest struct {
 	DiceToKeep []int `json:"dice_to_keep"`
+}
+
+// SetPlayerNameRequest receives the player's name
+type SetPlayerNameRequest struct {
+	PlayerName string `json:"player_name"`
 }
 
 // RollHandler handles the rolling logic and processing kept dice
@@ -76,10 +82,10 @@ func BankHandler(w http.ResponseWriter, r *http.Request) {
 		score := currentGameState.Turn.AccumulatedScore
 		if score > 0 {
 			currentGameState.TotalBank += score
-			
+
 			// Add to history (newest at the top)
 			currentGameState.History = append([]int{score}, currentGameState.History...)
-			
+
 			// Keep only the last 10 entries
 			if len(currentGameState.History) > 10 {
 				currentGameState.History = currentGameState.History[:10]
@@ -109,6 +115,25 @@ func ResetHandler(w http.ResponseWriter, r *http.Request) {
 	currentGameState.History = []int{}
 	currentGameState.Turn = game.NewTurn()
 	currentGameState.LastRoll = []int{}
+
+	renderJSON(w, currentGameState)
+}
+
+// SetPlayerNameHandler updates the player's name
+func SetPlayerNameHandler(w http.ResponseWriter, r *http.Request) {
+	currentGameState.mu.Lock()
+	defer currentGameState.mu.Unlock()
+
+	var req SetPlayerNameRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		renderJSON(w, map[string]string{"error": "invalid request"})
+		return
+	}
+
+	if req.PlayerName != "" {
+		currentGameState.PlayerName = req.PlayerName
+	}
 
 	renderJSON(w, currentGameState)
 }

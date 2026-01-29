@@ -41,6 +41,38 @@
         /* Game Container */
         .game-container { flex: 1; padding: 30px; background: #34495e; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; }
         
+        /* Player Name Section */
+        .player-name-section { 
+            display: flex; 
+            gap: 10px; 
+            margin-bottom: 20px; 
+            align-items: center;
+        }
+        .player-name-section input { 
+            padding: 8px 12px; 
+            border: none; 
+            border-radius: 6px; 
+            font-size: 1rem; 
+            flex: 1;
+            max-width: 300px;
+        }
+        .player-name-section button { 
+            padding: 8px 16px; 
+            background: #3498db; 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: bold;
+        }
+        .player-name-section button:hover { background: #2980b9; }
+        .player-name-display { 
+            font-size: 1.4rem; 
+            color: #f1c40f; 
+            font-weight: bold; 
+            margin-bottom: 20px;
+        }
+        
         #win-msg { 
             display: none; background: #f1c40f; color: #2c3e50; padding: 30px; 
             border-radius: 10px; margin-bottom: 20px; border: 4px solid #d4ac0d;
@@ -94,6 +126,12 @@
         </div>
 
         <h1>🎲 Go-Farkle</h1>
+
+        <div class="player-name-section">
+            <input type="text" id="player-name-input" placeholder="Enter your name..." />
+            <button onclick="setPlayerName()">Set Name</button>
+        </div>
+        <div id="player-name-display" class="player-name-display"></div>
         
         <div class="stats">
             <div class="stat-box">Turn Score <span id="turn-score" class="stat-value">0</span></div>
@@ -117,6 +155,14 @@
     let selectedIndices = new Set();
 
     async function updateUI(data) {
+        // Player Name
+        const playerNameDisplay = document.getElementById('player-name-display');
+        if (data.player_name) {
+            playerNameDisplay.innerText = `Player: ${data.player_name}`;
+        } else {
+            playerNameDisplay.innerText = '';
+        }
+
         // Stats
         document.getElementById('turn-score').innerText = data.turn.accumulated_score;
         document.getElementById('total-bank').innerText = data.total_bank;
@@ -181,6 +227,25 @@
             selectedIndices.add(index);
             element.classList.add('selected');
         }
+    }
+
+    async function setPlayerName() {
+        const playerNameInput = document.getElementById('player-name-input');
+        const playerName = playerNameInput.value.trim();
+
+        if (playerName === '') {
+            alert('Please enter a name');
+            return;
+        }
+
+        const res = await fetch('/api/set-player-name', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ player_name: playerName })
+        });
+        const data = await res.json();
+        updateUI(data);
+        playerNameInput.value = '';
     }
 
     async function roll() {

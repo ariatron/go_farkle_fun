@@ -10,7 +10,8 @@ func main() {
 	// API Routes
 	http.HandleFunc("/api/roll", api.RollHandler)
 	http.HandleFunc("/api/bank", api.BankHandler)
-	http.HandleFunc("/api/reset", api.ResetHandler) // <--- Add this line!
+	http.HandleFunc("/api/reset", api.ResetHandler)
+	http.HandleFunc("/api/set-player-name", api.SetPlayerNameHandler)
 
 	fs := http.FileServer(http.Dir("./static"))
 	http.Handle("/", fs)

@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+var rng = rand.New(rand.NewSource(time.Now().UnixNano()))
+
 type Turn struct {
 	AccumulatedScore int  `json:"accumulated_score"` // Score banked in previous rolls this turn
 	DiceRemaining    int  `json:"dice_remaining"`    // Starts at 6
@@ -17,10 +19,9 @@ func NewTurn() *Turn {
 
 // Roll simulates rolling the remaining dice
 func (t *Turn) Roll() []int {
-	rand.Seed(time.Now().UnixNano())
 	dice := make([]int, t.DiceRemaining)
 	for i := 0; i < t.DiceRemaining; i++ {
-		dice[i] = rand.Intn(6) + 1
+		dice[i] = rng.Intn(6) + 1
 	}
 	return dice
 }
@@ -28,7 +29,7 @@ func (t *Turn) Roll() []int {
 // ProcessRoll calculates the score and manages "Hot Dice"
 func (t *Turn) ProcessRoll(keptDice []int) (int, bool) {
 	result := CalculateScore(keptDice)
-	
+
 	if result.Score == 0 {
 		t.IsGameOver = true
 		t.AccumulatedScore = 0
@@ -36,8 +37,8 @@ func (t *Turn) ProcessRoll(keptDice []int) (int, bool) {
 	}
 
 	t.AccumulatedScore += result.Score
-	
-	// Hot Dice Logic: 
+
+	// Hot Dice Logic:
 	// If all dice used, reset to 6. Otherwise, subtract used dice.
 	remaining := t.DiceRemaining - result.DiceUsed
 	if remaining == 0 {
