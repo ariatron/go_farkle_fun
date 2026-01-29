@@ -1,64 +1,69 @@
-Go-Farkle
-A lightweight, web-based implementation of the classic dice game Farkle, built with a Go backend and a vanilla JavaScript/CSS frontend.
+# Go-Farkle
 
-Features
-Complete Scoring Engine: Supports standard 1s and 5s, Three-of-a-Kind (House Rule), Straights (1-6), and Three Pairs.
-"Hot Dice" Logic: Successfully score with all 6 dice to get a fresh set and keep your turn alive!
-Interactive UI: Click to select which dice you want to keep before rolling again.
-Win Condition: Race to be the first to bank 10,000 points.
-RESTful API: Clean separation between game logic and the web interface.
+A lightweight, web-based implementation of the classic dice game **Farkle**, built with a **Go backend** and a **vanilla JavaScript/CSS frontend**.
 
-Project Structure
-farkle-fun/
-├── cmd/
-│   └── server/
-│       └── main.go          # Entry point & Route definitions
-├── internal/
-│   ├── game/
-│   │   ├── engine.go        # Turn state & dice rolling
-│   │   ├── scoring.go       # Scoring rules & math
-│   │   └── scoring_test.go  # Unit tests for scoring patterns
-│   └── api/
-│       └── handlers.go      # HTTP request handling
-├── static/
-│   └── index.html           # Frontend UI & Game Logic
-├── go.mod                   # Go module definition
-└── README.md                # Project documentation
 
-Getting Started
-Prerequisites
-Go (version 1.18 or higher recommended)
+## Features
 
-Installation & Setup
-Initialize the module (if you haven't already):
+- **Complete Scoring Engine**
+  - Standard **1s** and **5s**
+  - **Three-of-a-Kind** (House Rule)
+  - **Straights (1–6)**
+  - **Three Pairs**
+- **Hot Dice Logic**
+  - Score with all 6 dice to get a fresh set and keep your turn alive
+- **Interactive UI**
+  - Click dice to select which ones to keep before rolling again
+- **Win Condition**
+  - First player to bank **10,000 points** wins
+- **RESTful API**
+  - Clean separation between game logic and the web interface
 
-Bash
+### Prerequisites
+- **Go 1.18+** (recommended)
+
+### Installation & Setup
+
+Initialize the module (if not already initialized):
+
+```bash
 go mod init farkle-app
 go mod tidy
+```
+
 Run the server:
-
-Bash
+```bash
 go run cmd/server/main.go
-Play the game: Open your browser and navigate to: http://localhost:8080
+```
 
-Testing
-The scoring engine includes comprehensive unit tests to ensure "Three of a Kind" and "Straights" are calculated correctly.
-
-Bash
+Run tests:
+```bash
 go test ./internal/game -v
-Example Test Output:
-Plaintext
+```
+
+Example Output:
+```bash
+go test ./internal/game -v
+=== RUN   TestHotDiceLogic
+--- PASS: TestHotDiceLogic (0.00s)
 === RUN   TestCalculateScore
+=== RUN   TestCalculateScore/Single_1_and_5
+=== RUN   TestCalculateScore/Three_of_a_Kind_(2s)
+=== RUN   TestCalculateScore/Three_of_a_Kind_(1s)
+=== RUN   TestCalculateScore/Straight_(1-6)
+=== RUN   TestCalculateScore/Three_Pairs
+=== RUN   TestCalculateScore/Four_of_a_Kind_(as_Two_Pairs)
+=== RUN   TestCalculateScore/Farkle_Roll
+=== RUN   TestCalculateScore/Mixed_Scoring
+--- PASS: TestCalculateScore (0.00s)
     --- PASS: TestCalculateScore/Single_1_and_5 (0.00s)
     --- PASS: TestCalculateScore/Three_of_a_Kind_(2s) (0.00s)
     --- PASS: TestCalculateScore/Three_of_a_Kind_(1s) (0.00s)
     --- PASS: TestCalculateScore/Straight_(1-6) (0.00s)
     --- PASS: TestCalculateScore/Three_Pairs (0.00s)
+    --- PASS: TestCalculateScore/Four_of_a_Kind_(as_Two_Pairs) (0.00s)
+    --- PASS: TestCalculateScore/Farkle_Roll (0.00s)
+    --- PASS: TestCalculateScore/Mixed_Scoring (0.00s)
 PASS
-
-Game Rules (Implemented)
-Rolling: Roll 6 dice to start.
-Scoring: You must keep at least one scoring die (1, 5, or a pattern) to roll again.
-Farkle: If a roll contains no scoring dice, you lose all points accumulated in that turn.
-Banking: You can stop at any time to add your Turn Score to your Total Bank.
-Winning: The first player to reach 10,000 points wins the game.
+ok      farkle-app/internal/game        (cached)
+```
