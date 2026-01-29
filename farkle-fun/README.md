@@ -1,7 +1,7 @@
-🎲 Go-Farkle
+Go-Farkle
 A lightweight, web-based implementation of the classic dice game Farkle, built with a Go backend and a vanilla JavaScript/CSS frontend.
 
-🚀 Features
+Features
 Complete Scoring Engine: Supports standard 1s and 5s, Three-of-a-Kind (House Rule), Straights (1-6), and Three Pairs.
 
 "Hot Dice" Logic: Successfully score with all 6 dice to get a fresh set and keep your turn alive!
@@ -12,7 +12,7 @@ Win Condition: Race to be the first to bank 10,000 points.
 
 RESTful API: Clean separation between game logic and the web interface.
 
-📂 Project Structure
+Project Structure
 Plaintext
 farkle-fun/
 ├── cmd/
@@ -29,7 +29,8 @@ farkle-fun/
 │   └── index.html           # Frontend UI & Game Logic
 ├── go.mod                   # Go module definition
 └── README.md                # Project documentation
-🛠️ Getting Started
+
+Getting Started
 Prerequisites
 Go (version 1.18 or higher recommended)
 
@@ -45,18 +46,41 @@ Bash
 go run cmd/server/main.go
 Play the game: Open your browser and navigate to: http://localhost:8080
 
-🧪 Testing
+Testing
 The scoring engine includes comprehensive unit tests to ensure "Three of a Kind" and "Straights" are calculated correctly.
 
 Bash
 go test ./internal/game -v
 📜 Game Rules (Implemented)
 Rolling: Roll 6 dice to start.
-
 Scoring: You must keep at least one scoring die (1, 5, or a pattern) to roll again.
-
 Farkle: If a roll contains no scoring dice, you lose all points accumulated in that turn.
-
 Banking: You can stop at any time to add your Turn Score to your Total Bank.
-
 Winning: The first player to reach 10,000 points wins the game.
+
+Example Test:
+```
+go test ./internal/game -v
+=== RUN   TestHotDiceLogic
+--- PASS: TestHotDiceLogic (0.00s)
+=== RUN   TestCalculateScore
+=== RUN   TestCalculateScore/Single_1_and_5
+=== RUN   TestCalculateScore/Three_of_a_Kind_(2s)
+=== RUN   TestCalculateScore/Three_of_a_Kind_(1s)
+=== RUN   TestCalculateScore/Straight_(1-6)
+=== RUN   TestCalculateScore/Three_Pairs
+=== RUN   TestCalculateScore/Four_of_a_Kind_(as_Two_Pairs)
+=== RUN   TestCalculateScore/Farkle_Roll
+=== RUN   TestCalculateScore/Mixed_Scoring
+--- PASS: TestCalculateScore (0.00s)
+    --- PASS: TestCalculateScore/Single_1_and_5 (0.00s)
+    --- PASS: TestCalculateScore/Three_of_a_Kind_(2s) (0.00s)
+    --- PASS: TestCalculateScore/Three_of_a_Kind_(1s) (0.00s)
+    --- PASS: TestCalculateScore/Straight_(1-6) (0.00s)
+    --- PASS: TestCalculateScore/Three_Pairs (0.00s)
+    --- PASS: TestCalculateScore/Four_of_a_Kind_(as_Two_Pairs) (0.00s)
+    --- PASS: TestCalculateScore/Farkle_Roll (0.00s)
+    --- PASS: TestCalculateScore/Mixed_Scoring (0.00s)
+PASS
+ok      farkle-app/internal/game        0.753s
+```
