@@ -106,6 +106,26 @@
         
         .farkle-msg { color: #e74c3c; font-size: 2.5rem; font-weight: bold; margin: 20px 0; display: none; text-shadow: 2px 2px 0 #000; }
         .dice-info { color: #bdc3c7; font-style: italic; margin-top: 10px; }
+        
+        .rules-section {
+            margin-top: 30px;
+            padding: 15px;
+            background: #2c3e50;
+            border-radius: 10px;
+            border: 1px solid #455a64;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #bdc3c7;
+        }
+        .rules-section h4 {
+            margin: 0 0 12px 0;
+            color: #f1c40f;
+            font-size: 1.1rem;
+        }
+        .rules-section p {
+            margin: 0;
+            text-align: left;
+        }
     </style>
 </head>
 <body>
@@ -147,6 +167,11 @@
         <div class="controls">
             <button id="roll-btn" class="btn btn-roll" onclick="roll()">Roll Dice</button>
             <button id="bank-btn" class="btn btn-bank" onclick="bank()">Bank Points</button>
+        </div>
+
+        <div class="rules-section">
+            <h4>Quick Rules</h4>
+            <p>Select scoring dice (1s and 5s, or three-of-a-kind) to keep. Roll again to add more points or bank to save your turn. Rolling all 6 dice gets you a fresh set! If you farkle (no scoring dice), you lose that turn's points. First to 10,000 wins.</p>
         </div>
     </div>
 </div>
