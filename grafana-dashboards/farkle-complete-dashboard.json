@@ -1,0 +1,867 @@
+{
+  "title": "🎲 Farkle Game - Complete Observability",
+  "description": "Full observability dashboard showing metrics, traces, and logs for the Farkle game",
+  "tags": [
+    "farkle",
+    "observability",
+    "demo",
+    "gaming"
+  ],
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 0,
+  "uid": "farkle-complete",
+  "refresh": "10s",
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "annotations": {
+    "list": [
+      {
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": false,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "📊 System Overview",
+      "type": "row",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false
+    },
+    {
+      "id": 2,
+      "title": "Total Requests",
+      "type": "stat",
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum(farkle_http_requests_total)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1000
+              },
+              {
+                "color": "red",
+                "value": 10000
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "orientation": "auto",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 3,
+      "title": "Request Rate (req/s)",
+      "type": "stat",
+      "gridPos": {
+        "x": 4,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(farkle_http_requests_total[1m]))",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 2
+        }
+      },
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 4,
+      "title": "P95 Latency",
+      "type": "stat",
+      "gridPos": {
+        "x": 8,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(farkle_http_request_duration_seconds_bucket[5m])) by (le))",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.1
+              },
+              {
+                "color": "red",
+                "value": 0.5
+              }
+            ]
+          },
+          "decimals": 3
+        }
+      },
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value"
+      }
+    },
+    {
+      "id": 5,
+      "title": "Error Rate",
+      "type": "stat",
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "(sum(rate(farkle_http_requests_total{status=~\"5..\"}[5m])) / sum(rate(farkle_http_requests_total[5m]))) * 100",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          },
+          "decimals": 2
+        }
+      },
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value"
+      }
+    },
+    {
+      "id": 6,
+      "title": "🎮 Game Stats",
+      "type": "stat",
+      "gridPos": {
+        "x": 16,
+        "y": 1,
+        "w": 8,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "farkle_game_rolls_total",
+          "legendFormat": "🎲 Rolls",
+          "refId": "A"
+        },
+        {
+          "expr": "farkle_game_banks_total",
+          "legendFormat": "💰 Banks",
+          "refId": "B"
+        },
+        {
+          "expr": "farkle_game_farkles_total",
+          "legendFormat": "💥 Farkles",
+          "refId": "C"
+        },
+        {
+          "expr": "farkle_game_wins_total",
+          "legendFormat": "🏆 Wins",
+          "refId": "D"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "textMode": "value_and_name",
+        "colorMode": "value"
+      }
+    },
+    {
+      "id": 7,
+      "title": "🌐 HTTP Performance",
+      "type": "row",
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false
+    },
+    {
+      "id": 8,
+      "title": "Request Rate by Endpoint",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(farkle_http_requests_total[1m])) by (endpoint)",
+          "legendFormat": "{{endpoint}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        }
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max",
+            "last"
+          ]
+        }
+      }
+    },
+    {
+      "id": 9,
+      "title": "Response Time Percentiles",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 6,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(farkle_http_request_duration_seconds_bucket[5m])) by (le, endpoint))",
+          "legendFormat": "{{endpoint}} (p50)",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(farkle_http_request_duration_seconds_bucket[5m])) by (le, endpoint))",
+          "legendFormat": "{{endpoint}} (p95)",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(farkle_http_request_duration_seconds_bucket[5m])) by (le, endpoint))",
+          "legendFormat": "{{endpoint}} (p99)",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 0
+          }
+        }
+      }
+    },
+    {
+      "id": 10,
+      "title": "HTTP Status Codes",
+      "type": "piechart",
+      "gridPos": {
+        "x": 0,
+        "y": 14,
+        "w": 8,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum by (status) (farkle_http_requests_total)",
+          "legendFormat": "{{status}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": [
+            "value",
+            "percent"
+          ]
+        },
+        "pieType": "donut"
+      }
+    },
+    {
+      "id": 11,
+      "title": "Response Size Distribution",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 8,
+        "y": 14,
+        "w": 16,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(farkle_http_response_size_bytes_bucket[5m])) by (le, endpoint))",
+          "legendFormat": "{{endpoint}} (p95)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "title": "🎮 Game Analytics",
+      "type": "row",
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false
+    },
+    {
+      "id": 13,
+      "title": "Game Event Rates",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 23,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "rate(farkle_game_rolls_total[1m])",
+          "legendFormat": "🎲 Rolls/sec",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(farkle_game_banks_total[1m])",
+          "legendFormat": "💰 Banks/sec",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(farkle_game_farkles_total[1m])",
+          "legendFormat": "💥 Farkles/sec",
+          "refId": "C"
+        },
+        {
+          "expr": "rate(farkle_game_wins_total[1m]) * 60",
+          "legendFormat": "🏆 Wins/min",
+          "refId": "D"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 20
+          }
+        }
+      }
+    },
+    {
+      "id": 14,
+      "title": "Farkle Rate %",
+      "type": "gauge",
+      "gridPos": {
+        "x": 12,
+        "y": 23,
+        "w": 6,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "(rate(farkle_game_farkles_total[5m]) / rate(farkle_game_rolls_total[5m])) * 100",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 50,
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 20
+              },
+              {
+                "color": "red",
+                "value": 40
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 15,
+      "title": "Win Rate",
+      "type": "stat",
+      "gridPos": {
+        "x": 18,
+        "y": 23,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "farkle_game_wins_total",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 5
+              },
+              {
+                "color": "yellow",
+                "value": 10
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "textMode": "value_and_name"
+      }
+    },
+    {
+      "id": 16,
+      "title": "Active Games",
+      "type": "stat",
+      "gridPos": {
+        "x": 18,
+        "y": 27,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "farkle_active_games",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        }
+      }
+    },
+    {
+      "id": 17,
+      "title": "Points Distribution (Rolls)",
+      "type": "heatmap",
+      "gridPos": {
+        "x": 0,
+        "y": 31,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(farkle_points_distribution_bucket{type=\"roll\"}[5m])) by (le)",
+          "format": "heatmap",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "title": "Points Distribution (Banks)",
+      "type": "heatmap",
+      "gridPos": {
+        "x": 12,
+        "y": 31,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(farkle_points_distribution_bucket{type=\"bank\"}[5m])) by (le)",
+          "format": "heatmap",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "title": "🔍 Distributed Tracing",
+      "type": "row",
+      "gridPos": {
+        "x": 0,
+        "y": 39,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false
+    },
+    {
+      "id": 20,
+      "title": "Recent Traces",
+      "type": "traces",
+      "gridPos": {
+        "x": 0,
+        "y": 40,
+        "w": 24,
+        "h": 12
+      },
+      "datasource": {
+        "type": "tempo"
+      },
+      "targets": [
+        {
+          "queryType": "traceql",
+          "query": "{resource.service.name=\"farkle-game\"}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showTraceId": true,
+        "showTime": true,
+        "showTags": true
+      }
+    },
+    {
+      "id": 21,
+      "title": "Trace Latency by Endpoint",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 52,
+        "w": 24,
+        "h": 8
+      },
+      "datasource": {
+        "type": "tempo"
+      },
+      "targets": [
+        {
+          "queryType": "metrics",
+          "query": "{ resource.service.name=\"farkle-game\" } | rate() by (name)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "title": "📝 Application Logs",
+      "type": "row",
+      "gridPos": {
+        "x": 0,
+        "y": 60,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false
+    },
+    {
+      "id": 23,
+      "title": "Log Volume by Level",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 61,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "loki"
+      },
+      "targets": [
+        {
+          "expr": "sum by (level) (rate({service=\"farkle-game\"} | json [1m]))",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 100
+          }
+        }
+      }
+    },
+    {
+      "id": 24,
+      "title": "Error Logs",
+      "type": "stat",
+      "gridPos": {
+        "x": 12,
+        "y": 61,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "loki"
+      },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service=\"farkle-game\",level=\"ERROR\"} [5m]))",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 25,
+      "title": "Logs per Second",
+      "type": "stat",
+      "gridPos": {
+        "x": 18,
+        "y": 61,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "loki"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate({service=\"farkle-game\"} [1m]))",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "logs/s",
+          "decimals": 2
+        }
+      }
+    },
+    {
+      "id": 26,
+      "title": "Recent Application Logs",
+      "type": "logs",
+      "gridPos": {
+        "x": 0,
+        "y": 69,
+        "w": 24,
+        "h": 12
+      },
+      "datasource": {
+        "type": "loki"
+      },
+      "targets": [
+        {
+          "expr": "{service=\"farkle-game\"} | json",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": true,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "none"
+      }
+    },
+    {
+      "id": 27,
+      "title": "Game Event Logs",
+      "type": "logs",
+      "gridPos": {
+        "x": 0,
+        "y": 81,
+        "w": 24,
+        "h": 10
+      },
+      "datasource": {
+        "type": "loki"
+      },
+      "targets": [
+        {
+          "expr": "{service=\"farkle-game\"} |~ \"rolled|banked|farkled|won\" | json",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true
+      }
+    }
+  ],
+  "templating": {
+    "list": []
+  },
+  "timepicker": {},
+  "weekStart": ""
+}

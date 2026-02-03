@@ -1,0 +1,122 @@
+// Grafana Alloy Configuration for Farkle Game
+// Alloy is the successor to Grafana Agent
+//
+// Copy this file to alloy-config.alloy and fill in your Grafana Cloud credentials
+// Get your credentials from: https://grafana.com/orgs/YOUR_ORG/stacks
+
+// Logging configuration
+logging {
+	level  = "info"
+	format = "logfmt"
+}
+
+// Prometheus metrics scraping and remote write
+prometheus.scrape "farkle_metrics" {
+  targets = [{
+    __address__ = "localhost:8080",
+    service     = "farkle-game",
+    environment = "production",
+  }]
+
+  forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+
+  scrape_interval = "15s"
+  metrics_path    = "/metrics"
+}
+
+prometheus.remote_write "grafana_cloud" {
+  endpoint {
+    url = "https://prometheus-YOUR-REGION.grafana.net/api/prom/push"
+
+    basic_auth {
+      username = "YOUR_PROMETHEUS_USER_ID"
+      password = "YOUR_GRAFANA_CLOUD_API_TOKEN"
+    }
+  }
+}
+
+// OpenTelemetry traces receiver and forwarding
+otelcol.receiver.otlp "farkle_traces" {
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+
+  output {
+    traces  = [otelcol.processor.batch.default.input]
+  }
+}
+
+otelcol.processor.batch "default" {
+  timeout          = "5s"
+  send_batch_size  = 100
+
+  output {
+    traces  = [otelcol.exporter.otlp.grafana_cloud.input]
+  }
+}
+
+otelcol.exporter.otlp "grafana_cloud" {
+  client {
+    endpoint = "tempo-YOUR-REGION.grafana.net:443"
+
+    auth = otelcol.auth.basic.grafana_cloud.handler
+  }
+}
+
+otelcol.auth.basic "grafana_cloud" {
+  username = "YOUR_TEMPO_USER_ID"
+  password = "YOUR_GRAFANA_CLOUD_API_TOKEN"
+}
+
+// Loki logs configuration - Stream app logs to Grafana Cloud
+loki.process "farkle_logs" {
+  forward_to = [loki.write.grafana_cloud.receiver]
+
+  stage.json {
+    expressions = {
+      level      = "level",
+      msg        = "msg",
+      time       = "time",
+      method     = "method",
+      path       = "path",
+      status     = "status",
+      duration_ms = "duration_ms",
+      trace_id   = "trace_id",
+    }
+  }
+
+  stage.labels {
+    values = {
+      level  = "level",
+      method = "method",
+      path   = "path",
+    }
+  }
+}
+
+loki.source.file "farkle_app_logs" {
+  targets = [
+    {
+      __path__ = "/tmp/farkle-app.log",
+      service  = "farkle-game",
+      environment = "production",
+    },
+  ]
+
+  forward_to = [loki.process.farkle_logs.receiver]
+}
+
+loki.write "grafana_cloud" {
+  endpoint {
+    url = "https://logs-YOUR-REGION.grafana.net/loki/api/v1/push"
+
+    basic_auth {
+      username = "YOUR_LOKI_USER_ID"
+      password = "YOUR_GRAFANA_CLOUD_API_TOKEN"
+    }
+  }
+}

@@ -1,0 +1,40 @@
+# Sensitive files - DO NOT COMMIT
+.env
+alloy-config.alloy
+
+# Compiled binaries
+farkle-server
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binaries
+*.test
+
+# Go coverage files
+*.out
+coverage.txt
+
+# Go workspace file
+go.work
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+/tmp/
+
+# Temporary files
+*.tmp
+*.bak
