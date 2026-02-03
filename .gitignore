@@ -1,6 +1,7 @@
 # Sensitive files - DO NOT COMMIT
 .env
 alloy-config.alloy
+grafana-agent-config.yaml
 
 # Compiled binaries
 farkle-server

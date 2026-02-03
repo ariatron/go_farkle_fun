@@ -1,0 +1,45 @@
+server:
+  log_level: info
+  http_listen_port: 12345
+
+metrics:
+  global:
+    scrape_interval: 15s
+    remote_write:
+      - url: https://prometheus-YOUR-REGION.grafana.net/api/prom/push
+        basic_auth:
+          username: YOUR_PROMETHEUS_USER_ID
+          password: YOUR_GRAFANA_CLOUD_API_TOKEN
+
+  configs:
+    - name: farkle-game
+      scrape_configs:
+        - job_name: 'farkle-app'
+          static_configs:
+            - targets: ['localhost:8080']
+              labels:
+                service: 'farkle-game'
+                environment: 'production'
+          metrics_path: '/metrics'
+          scrape_interval: 15s
+
+traces:
+  configs:
+    - name: farkle-traces
+      receivers:
+        otlp:
+          protocols:
+            http:
+              endpoint: "0.0.0.0:4318"
+            grpc:
+              endpoint: "0.0.0.0:4317"
+
+      remote_write:
+        - endpoint: tempo-YOUR-REGION.grafana.net:443
+          basic_auth:
+            username: YOUR_TEMPO_USER_ID
+            password: YOUR_GRAFANA_CLOUD_API_TOKEN
+
+      batch:
+        timeout: 5s
+        send_batch_size: 100
