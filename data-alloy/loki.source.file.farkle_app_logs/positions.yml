@@ -1,4 +1,4 @@
 positions:
   ? path: /tmp/farkle-app.log
     labels: '{environment="production", service="farkle-game"}'
-  : "53897"
+  : "55841"
