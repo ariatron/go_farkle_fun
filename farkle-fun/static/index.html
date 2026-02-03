@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Go-Farkle: 10k Challenge</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #2c3e50; color: white; margin: 0; padding: 20px; }
+        
+        /* Layout Wrapper */
+        .main-layout { 
+            display: flex; 
+            max-width: 900px; 
+            margin: 40px auto; 
+            gap: 20px; 
+            align-items: flex-start;
+        }
+
+        /* Sidebar Styling */
+        .history-sidebar { 
+            width: 200px; 
+            background: #34495e; 
+            padding: 20px; 
+            border-radius: 15px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid #455a64;
+        }
+        .history-sidebar h3 { margin-top: 0; font-size: 1.2rem; color: #bdc3c7; border-bottom: 2px solid #2c3e50; padding-bottom: 10px; }
+        .history-list { list-style: none; padding: 0; margin: 0; }
+        .history-item { 
+            padding: 10px 0; 
+            border-bottom: 1px solid #455a64; 
+            color: #f1c40f; 
+            font-weight: bold; 
+            font-size: 1.1rem;
+            animation: fadeIn 0.3s ease-in;
+        }
+        .history-item span { color: #bdc3c7; font-size: 0.8rem; font-weight: normal; margin-left: 5px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+
+        /* Game Container */
+        .game-container { flex: 1; padding: 30px; background: #34495e; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; }
+        
+        /* Player Name Section */
+        .player-name-section { 
+            display: flex; 
+            gap: 10px; 
+            margin-bottom: 20px; 
+            align-items: center;
+        }
+        .player-name-section input { 
+            padding: 8px 12px; 
+            border: none; 
+            border-radius: 6px; 
+            font-size: 1rem; 
+            flex: 1;
+            max-width: 300px;
+        }
+        .player-name-section button { 
+            padding: 8px 16px; 
+            background: #3498db; 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: bold;
+        }
+        .player-name-section button:hover { background: #2980b9; }
+        .player-name-display { 
+            font-size: 1.4rem; 
+            color: #f1c40f; 
+            font-weight: bold; 
+            margin-bottom: 20px;
+        }
+        
+        #win-msg { 
+            display: none; background: #f1c40f; color: #2c3e50; padding: 30px; 
+            border-radius: 10px; margin-bottom: 20px; border: 4px solid #d4ac0d;
+            animation: bounce 0.5s ease-in-out;
+        }
+        @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+
+        .stats { display: flex; justify-content: space-around; margin-bottom: 20px; background: #2c3e50; padding: 15px; border-radius: 10px; border: 1px solid #455a64; }
+        .stat-box { font-size: 1.1rem; }
+        .stat-value { display: block; font-size: 1.8rem; font-weight: bold; color: #f1c40f; }
+
+        .dice-container { display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; margin: 30px 0; min-height: 100px; }
+        .die { 
+            width: 70px; height: 70px; background: #ecf0f1; color: #2c3e50; border-radius: 12px; 
+            display: flex; align-items: center; justify-content: center; font-size: 2.2rem; font-weight: bold; 
+            cursor: pointer; transition: all 0.2s ease; user-select: none; box-shadow: 0 5px 0 #bdc3c7;
+        }
+        .die:hover { transform: translateY(-3px); background: #fff; }
+        .die.selected { 
+            background: #f1c40f; color: #2c3e50; transform: translateY(5px); 
+            box-shadow: 0 0 15px rgba(241, 196, 15, 0.5); border: 2px solid #d4ac0d;
+        }
+        .die.farkled { opacity: 0.4; cursor: default; filter: grayscale(1); box-shadow: none; transform: none; }
+
+        .controls { display: flex; justify-content: center; gap: 15px; margin-top: 30px; }
+        .btn { padding: 12px 30px; font-size: 1.1rem; cursor: pointer; border: none; border-radius: 8px; font-weight: bold; transition: opacity 0.2s; }
+        .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .btn-roll { background: #27ae60; color: white; }
+        .btn-bank { background: #e67e22; color: white; }
+        .btn-reset { background: #34495e; color: white; border: 1px solid white; margin-top: 10px; }
+        
+        .farkle-msg { color: #e74c3c; font-size: 2.5rem; font-weight: bold; margin: 20px 0; display: none; text-shadow: 2px 2px 0 #000; }
+        .dice-info { color: #bdc3c7; font-style: italic; margin-top: 10px; }
+        
+        .rules-section {
+            margin-top: 30px;
+            padding: 15px;
+            background: #2c3e50;
+            border-radius: 10px;
+            border: 1px solid #455a64;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #bdc3c7;
+        }
+        .rules-section h4 {
+            margin: 0 0 12px 0;
+            color: #f1c40f;
+            font-size: 1.1rem;
+        }
+        .rules-section p {
+            margin: 0;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-layout">
+    <div class="history-sidebar">
+        <h3>Recents</h3>
+        <ul id="history-list" class="history-list">
+            <li style="color: #7f8c8d">No scores yet</li>
+        </ul>
+    </div>
+
+    <div class="game-container">
+        <div id="win-msg">
+            <h2 style="margin: 0;">🏆 CHAMPION! 🏆</h2>
+            <p>You hit the 10,000 point goal!</p>
+            <button class="btn btn-reset" onclick="resetGame()">Start New Game</button>
+        </div>
+
+        <h1>🎲 Go-Farkle</h1>
+
+        <div class="player-name-section">
+            <input type="text" id="player-name-input" placeholder="Enter your name..." />
+            <button onclick="setPlayerName()">Set Name</button>
+        </div>
+        <div id="player-name-display" class="player-name-display"></div>
+        
+        <div class="stats">
+            <div class="stat-box">Turn Score <span id="turn-score" class="stat-value">0</span></div>
+            <div class="stat-box">Total Bank <span id="total-bank" class="stat-value">0</span></div>
+        </div>
+
+        <div id="farkle-msg" class="farkle-msg">FARKLE!</div>
+
+        <div class="dice-container" id="dice-display"></div>
+
+        <p class="dice-info">Dice left to roll: <span id="dice-left">6</span></p>
+
+        <div class="controls">
+            <button id="roll-btn" class="btn btn-roll" onclick="roll()">Roll Dice</button>
+            <button id="bank-btn" class="btn btn-bank" onclick="bank()">Bank Points</button>
+        </div>
+
+        <div class="rules-section">
+            <h4>Quick Rules</h4>
+            <p>Select scoring dice (1s and 5s, or three-of-a-kind) to keep. Roll again to add more points or bank to save your turn. Rolling all 6 dice gets you a fresh set! If you farkle (no scoring dice), you lose that turn's points. First to 10,000 wins.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    let selectedIndices = new Set();
+
+    async function updateUI(data) {
+        // Player Name
+        const playerNameDisplay = document.getElementById('player-name-display');
+        if (data.player_name) {
+            playerNameDisplay.innerText = `Player: ${data.player_name}`;
+        } else {
+            playerNameDisplay.innerText = '';
+        }
+
+        // Stats
+        document.getElementById('turn-score').innerText = data.turn.accumulated_score;
+        document.getElementById('total-bank').innerText = data.total_bank;
+        document.getElementById('dice-left').innerText = data.turn.dice_remaining;
+
+        // History Sidebar
+        const historyList = document.getElementById('history-list');
+        historyList.innerHTML = '';
+        if (data.history && data.history.length > 0) {
+            data.history.forEach(score => {
+                const li = document.createElement('li');
+                li.className = 'history-item';
+                li.innerHTML = `+${score.toLocaleString()} <span>pts</span>`;
+                historyList.appendChild(li);
+            });
+        } else {
+            historyList.innerHTML = '<li style="color: #7f8c8d">No scores yet</li>';
+        }
+
+        // Farkle Check
+        const hasDice = data.last_roll && data.last_roll.length > 0;
+        const isFarkle = data.turn.is_game_over && hasDice;
+        document.getElementById('farkle-msg').style.display = isFarkle ? 'block' : 'none';
+        
+        selectedIndices.clear();
+
+        // Win State
+        const winMsg = document.getElementById('win-msg');
+        if (data.winner) {
+            winMsg.style.display = 'block';
+            document.getElementById('roll-btn').disabled = true;
+            document.getElementById('bank-btn').disabled = true;
+        } else {
+            winMsg.style.display = 'none';
+            document.getElementById('roll-btn').disabled = false;
+        }
+
+        document.getElementById('bank-btn').disabled = (isFarkle || data.turn.accumulated_score === 0 || data.winner);
+
+        // Render Dice
+        const diceDiv = document.getElementById('dice-display');
+        diceDiv.innerHTML = '';
+
+        if (hasDice && !data.winner) {
+            data.last_roll.forEach((val, index) => {
+                const die = document.createElement('div');
+                die.className = 'die' + (isFarkle ? ' farkled' : '');
+                die.innerText = val;
+                if (!isFarkle) {
+                    die.onclick = () => toggleDie(die, index);
+                }
+                diceDiv.appendChild(die);
+            });
+        }
+    }
+
+    function toggleDie(element, index) {
+        if (selectedIndices.has(index)) {
+            selectedIndices.delete(index);
+            element.classList.remove('selected');
+        } else {
+            selectedIndices.add(index);
+            element.classList.add('selected');
+        }
+    }
+
+    async function setPlayerName() {
+        const playerNameInput = document.getElementById('player-name-input');
+        const playerName = playerNameInput.value.trim();
+
+        if (playerName === '') {
+            alert('Please enter a name');
+            return;
+        }
+
+        const res = await fetch('/api/set-player-name', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ player_name: playerName })
+        });
+        const data = await res.json();
+        updateUI(data);
+        playerNameInput.value = '';
+    }
+
+    async function roll() {
+        const diceToKeep = [];
+        const diceElements = document.querySelectorAll('.die');
+        selectedIndices.forEach(index => {
+            diceToKeep.push(parseInt(diceElements[index].innerText));
+        });
+
+        const res = await fetch('/api/roll', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ dice_to_keep: diceToKeep })
+        });
+        updateUI(await res.json());
+    }
+
+    async function bank() {
+        const res = await fetch('/api/bank');
+        updateUI(await res.json());
+    }
+
+    async function resetGame() {
+        const res = await fetch('/api/reset');
+        updateUI(await res.json());
+    }
+
+    window.onload = async () => {
+        const res = await fetch('/api/bank');
+        updateUI(await res.json());
+    };
+</script>
+</body>
+</html>
