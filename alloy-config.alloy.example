@@ -1,8 +1,21 @@
 // Grafana Alloy Configuration for Farkle Game
 // Alloy is the successor to Grafana Agent
 //
-// Copy this file to alloy-config.alloy and fill in your Grafana Cloud credentials
-// Get your credentials from: https://grafana.com/orgs/YOUR_ORG/stacks
+// SETUP INSTRUCTIONS:
+// 1. Copy this file: cp alloy-config.alloy.example alloy-config.alloy
+// 2. Get credentials from your Grafana Cloud portal:
+//    - Go to: https://grafana.com/orgs/YOUR_ORG/stacks
+//    - Click on your stack
+//    - Find "Details" for each service (Prometheus, Tempo, Loki)
+// 3. Replace placeholders below with your actual values:
+//    - YOUR-REGION: e.g., "prod-us-east-0", "prod-eu-west-0", etc.
+//    - YOUR_PROMETHEUS_USER_ID: Found in Prometheus → Details → Instance ID
+//    - YOUR_TEMPO_USER_ID: Found in Tempo → Details → Instance ID
+//    - YOUR_LOKI_USER_ID: Found in Loki → Details → Instance ID
+//    - YOUR_GRAFANA_CLOUD_API_TOKEN: Create at Settings → API Keys
+// 4. Save and start: alloy run alloy-config.alloy
+//
+// For local development without Grafana Cloud, see: docs/OBSERVABILITY.md
 
 // Logging configuration
 logging {
