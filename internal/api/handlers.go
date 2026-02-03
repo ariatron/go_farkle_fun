@@ -40,8 +40,8 @@ type SetPlayerNameRequest struct {
 
 // RollHandler handles the rolling logic and processing kept dice
 func RollHandler(w http.ResponseWriter, r *http.Request) {
-	ctx, span := observability.StartSpan(r.Context(), "RollHandler")
-	defer span.End()
+	ctx := r.Context()
+	span := trace.SpanFromContext(ctx)
 
 	currentGameState.mu.Lock()
 	defer currentGameState.mu.Unlock()
@@ -119,8 +119,8 @@ func RollHandler(w http.ResponseWriter, r *http.Request) {
 
 // BankHandler saves turn score, updates history, and checks for win
 func BankHandler(w http.ResponseWriter, r *http.Request) {
-	ctx, span := observability.StartSpan(r.Context(), "BankHandler")
-	defer span.End()
+	ctx := r.Context()
+	span := trace.SpanFromContext(ctx)
 
 	currentGameState.mu.Lock()
 	defer currentGameState.mu.Unlock()
@@ -191,8 +191,8 @@ func BankHandler(w http.ResponseWriter, r *http.Request) {
 
 // ResetHandler wipes the entire game state for a fresh start
 func ResetHandler(w http.ResponseWriter, r *http.Request) {
-	ctx, span := observability.StartSpan(r.Context(), "ResetHandler")
-	defer span.End()
+	ctx := r.Context()
+	span := trace.SpanFromContext(ctx)
 
 	currentGameState.mu.Lock()
 	defer currentGameState.mu.Unlock()
@@ -215,8 +215,8 @@ func ResetHandler(w http.ResponseWriter, r *http.Request) {
 
 // SetPlayerNameHandler updates the player's name
 func SetPlayerNameHandler(w http.ResponseWriter, r *http.Request) {
-	ctx, span := observability.StartSpan(r.Context(), "SetPlayerNameHandler")
-	defer span.End()
+	ctx := r.Context()
+	span := trace.SpanFromContext(ctx)
 
 	currentGameState.mu.Lock()
 	defer currentGameState.mu.Unlock()
