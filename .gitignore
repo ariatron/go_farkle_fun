@@ -2,6 +2,7 @@
 .env
 alloy-config.alloy
 grafana-agent-config.yaml
+k6-grafana-cloud.json
 
 # Compiled binaries
 farkle-server

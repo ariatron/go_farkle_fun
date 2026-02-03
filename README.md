@@ -275,21 +275,25 @@ docker-compose -f docker-compose.observability.yml up -d
 ```bash
 # Install K6: https://k6.io/docs/getting-started/installation/
 
-# Smoke test (basic validation)
+# Run tests locally (console output only)
 k6 run tests/k6/smoke-test.js
-
-# Load test (expected traffic)
 k6 run tests/k6/load-test.js
-
-# Stress test (find limits)
 k6 run tests/k6/stress-test.js
-
-# Spike test (sudden surge)
 k6 run tests/k6/spike-test.js
-
-# Game scenario (realistic gameplay)
 k6 run tests/k6/game-scenario.js
+
+# Run tests with Grafana Cloud reporting (sends metrics to Grafana Cloud in real-time!)
+./scripts/run-k6-with-cloud.sh                           # Default: load test
+./scripts/run-k6-with-cloud.sh tests/k6/smoke-test.js   # Specific test
+./scripts/run-k6-with-cloud.sh tests/k6/stress-test.js  # Stress test
 ```
+
+**K6 + Grafana Cloud Integration:**
+- K6 tests can send metrics directly to Grafana Cloud using Prometheus remote write
+- View test results in real-time as the test runs
+- Import the K6 dashboard: `grafana-dashboards/k6-dashboard.json`
+- See detailed guide: [`tests/k6/README.md`](tests/k6/README.md)
+- Correlate K6 load with application metrics, traces, and logs
 
 ### Metrics Available
 
@@ -371,7 +375,9 @@ This automated demo:
 
 For complete observability documentation, see:
 - **[Local Observability](docs/OBSERVABILITY.md)** - Run Jaeger/Prometheus/Grafana locally
-- **[Grafana Cloud](docs/GRAFANA_CLOUD.md)** - Cloud-based managed observability
+- **[Grafana Cloud Setup](docs/GRAFANA_CLOUD_SETUP.md)** - Cloud-based managed observability
+- **[K6 Metrics Guide](docs/K6_METRICS_GUIDE.md)** - K6 load testing with Grafana Cloud
+- **[K6 Tests README](tests/k6/README.md)** - K6 test scenarios and usage
 
 ## Future Enhancements
 
