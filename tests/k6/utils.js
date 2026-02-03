@@ -10,6 +10,11 @@ export const JSON_HEADERS = {
   'Content-Type': 'application/json',
 };
 
+// Generate random integer between min and max (inclusive)
+export function randomIntBetween(min, max) {
+  return Math.floor(Math.random() * (max - min + 1) + min);
+}
+
 // Common checks for successful API responses
 export function checkSuccess(response, endpoint) {
   return check(response, {

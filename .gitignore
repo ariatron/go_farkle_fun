@@ -42,3 +42,12 @@ Thumbs.db
 
 # Alloy runtime data
 data-alloy/
+
+# Process ID files
+*.pid
+.alloy.pid
+.server.pid
+.continuous-traffic.pid
+
+# Logs directory
+logs/
