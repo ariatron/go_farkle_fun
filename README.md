@@ -2,6 +2,41 @@
 
 A lightweight, web-based implementation of the classic dice game **Farkle**, built with a **Go backend** and a **vanilla JavaScript/CSS frontend**.
 
+**🎮 Now supports both Single-Player and Multiplayer modes!** Use the `GAME_MODE` environment variable to switch between modes.
+
+## Game Modes
+
+### Single-Player Mode (Default)
+Classic Farkle gameplay for one player trying to reach 10,000 points.
+
+```bash
+# Start in single-player mode (default)
+go run cmd/server/main.go
+
+# Or explicitly set single-player
+GAME_MODE=single go run cmd/server/main.go
+```
+
+Open browser to: http://localhost:8080
+
+### Multiplayer Mode
+Play with 2-6 players in turn-based rooms.
+
+```bash
+# Start in multiplayer mode
+GAME_MODE=multi go run cmd/server/main.go
+```
+
+Open browser to: http://localhost:8080/multiplayer.html
+
+**Multiplayer Features:**
+- Create or join game rooms with unique room IDs
+- Support for 2-6 players per room
+- Turn-based gameplay with turn rotation
+- Real-time room state updates via polling
+- Room cleanup for inactive games
+
+**See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) for complete multiplayer documentation.**
 
 ## Features
 
@@ -383,9 +418,12 @@ For complete observability documentation, see:
 
 ## Future Enhancements
 
-- Multiplayer support with player turns
+- ✅ **Multiplayer support with player turns** - IMPLEMENTED!
+- WebSocket/SSE for real-time multiplayer updates (currently using polling)
 - Database persistence for game history
-- Difficulty levels or variants
+- Player reconnection support
+- Spectator mode
+- Chat functionality
 - Leaderboard system
 - Mobile app version
 

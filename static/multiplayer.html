@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farkle - Multiplayer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 20px; padding: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        h1 { color: #667eea; text-align: center; margin-bottom: 30px; font-size: 2.5em; }
+        .lobby, .waiting-room, .game-screen { display: none; }
+        .lobby.active, .waiting-room.active, .game-screen.active { display: block; }
+        input, button { padding: 12px 24px; font-size: 1em; border-radius: 8px; border: 2px solid #667eea; }
+        button { background: #667eea; color: white; cursor: pointer; transition: all 0.3s; }
+        button:hover { background: #764ba2; transform: translateY(-2px); }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .players-list { margin: 20px 0; }
+        .player { padding: 10px; margin: 5px 0; background: #f0f0f0; border-radius: 8px; display: flex; justify-content: space-between; }
+        .player.current { background: #ffeb3b; font-weight: bold; }
+        .dice-container { display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap; }
+        .die { width: 60px; height: 60px; border: 3px solid #667eea; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 2em; background: white; cursor: pointer; transition: all 0.2s; }
+        .die:hover { transform: scale(1.1); }
+        .die.selected { background: #ffeb3b; border-color: #ff9800; }
+        .game-info { background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .button-group { display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap; }
+        .error { color: red; padding: 10px; background: #ffebee; border-radius: 8px; margin: 10px 0; }
+        .room-code { font-size: 1.5em; font-weight: bold; color: #667eea; text-align: center; margin: 20px 0; padding: 15px; background: #f0f0f0; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎲 Farkle - Multiplayer</h1>
+
+        <!-- Lobby Screen -->
+        <div class="lobby active">
+            <h2>Game Lobby</h2>
+            <div style="margin: 30px 0;">
+                <h3>Create New Game</h3>
+                <input type="number" id="maxPlayers" min="2" max="6" value="4" style="width: 100px;">
+                <button onclick="createRoom()">Create Room</button>
+            </div>
+            <div style="margin: 30px 0;">
+                <h3>Join Existing Game</h3>
+                <input type="text" id="joinRoomId" placeholder="Room Code" style="width: 200px;">
+                <input type="text" id="joinPlayerName" placeholder="Your Name" style="width: 200px;">
+                <button onclick="joinRoom()">Join</button>
+            </div>
+            <div id="lobbyError" class="error" style="display:none;"></div>
+        </div>
+
+        <!-- Waiting Room -->
+        <div class="waiting-room">
+            <div class="room-code" id="roomCode"></div>
+            <h3>Players</h3>
+            <div class="players-list" id="waitingPlayers"></div>
+            <button onclick="startGame()">Start Game</button>
+            <div id="waitingError" class="error" style="display:none;"></div>
+        </div>
+
+        <!-- Game Screen -->
+        <div class="game-screen">
+            <div class="game-info">
+                <div><strong>Room:</strong> <span id="gameRoomId"></span></div>
+                <div><strong>Your Turn:</strong> <span id="yourTurn">No</span></div>
+            </div>
+            
+            <h3>Players</h3>
+            <div class="players-list" id="gamePlayers"></div>
+
+            <div class="game-info">
+                <div><strong>Current Score:</strong> <span id="currentScore">0</span> points</div>
+                <div><strong>Dice Remaining:</strong> <span id="diceRemaining">6</span></div>
+            </div>
+
+            <h3>Dice</h3>
+            <div class="dice-container" id="diceContainer"></div>
+
+            <div class="button-group">
+                <button onclick="rollDice()" id="rollBtn">Roll Dice</button>
+                <button onclick="bankPoints()" id="bankBtn">Bank Points</button>
+                <button onclick="endTurn()" id="endTurnBtn">End Turn</button>
+            </div>
+
+            <div id="gameError" class="error" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        let roomId = '';
+        let playerId = '';
+        let selectedDice = [];
+        let gameState = null;
+
+        function showScreen(screen) {
+            document.querySelectorAll('.lobby, .waiting-room, .game-screen').forEach(s => s.classList.remove('active'));
+            document.querySelector('.' + screen).classList.add('active');
+        }
+
+        function showError(elementId, message) {
+            const el = document.getElementById(elementId);
+            el.textContent = message;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 5000);
+        }
+
+        async function createRoom() {
+            try {
+                const maxPlayers = parseInt(document.getElementById('maxPlayers').value);
+                const res = await fetch('/api/rooms/create', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({max_players: maxPlayers})
+                });
+                const data = await res.json();
+                roomId = data.room_id;
+                const playerName = prompt('Enter your name:');
+                if (!playerName) return;
+                await joinRoomWithId(roomId, playerName);
+            } catch (err) {
+                showError('lobbyError', err.message);
+            }
+        }
+
+        async function joinRoom() {
+            const id = document.getElementById('joinRoomId').value;
+            const name = document.getElementById('joinPlayerName').value;
+            if (!id || !name) {
+                showError('lobbyError', 'Please enter room code and your name');
+                return;
+            }
+            await joinRoomWithId(id, name);
+        }
+
+        async function joinRoomWithId(id, name) {
+            try {
+                const res = await fetch(`/api/rooms/${id}/join`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({player_name: name})
+                });
+                const data = await res.json();
+                roomId = id;
+                playerId = data.player_id;
+                document.getElementById('roomCode').textContent = `Room Code: ${roomId}`;
+                showScreen('waiting-room');
+                updateWaitingRoom(data.room);
+                startPolling();
+            } catch (err) {
+                showError('lobbyError', err.message);
+            }
+        }
+
+        async function startGame() {
+            try {
+                const res = await fetch(`/api/rooms/${roomId}/start`, {method: 'POST'});
+                const data = await res.json();
+                updateGameState(data);
+                showScreen('game-screen');
+            } catch (err) {
+                showError('waitingError', err.message);
+            }
+        }
+
+        function updateWaitingRoom(room) {
+            const list = document.getElementById('waitingPlayers');
+            list.innerHTML = room.players.map(p => `
+                <div class="player">${p.name}</div>
+            `).join('');
+        }
+
+        async function pollState() {
+            try {
+                const res = await fetch(`/api/rooms/${roomId}/state`);
+                const data = await res.json();
+                updateGameState(data);
+                if (data.game_status === 'waiting') {
+                    updateWaitingRoom(data);
+                }
+            } catch (err) {
+                console.error('Poll error:', err);
+            }
+        }
+
+        function startPolling() {
+            setInterval(pollState, 2000);
+        }
+
+        function updateGameState(state) {
+            gameState = state;
+            document.getElementById('gameRoomId').textContent = state.room_id;
+            
+            const currentPlayer = state.players[state.current_player_index];
+            const isMyTurn = currentPlayer && currentPlayer.id === playerId;
+            document.getElementById('yourTurn').textContent = isMyTurn ? 'YES!' : 'No';
+            document.getElementById('yourTurn').style.color = isMyTurn ? 'green' : 'red';
+
+            // Update players list
+            const list = document.getElementById('gamePlayers');
+            list.innerHTML = state.players.map((p, i) => `
+                <div class="player ${i === state.current_player_index ? 'current' : ''}">
+                    <span>${p.name}${p.is_winner ? ' 🏆' : ''}</span>
+                    <span>${p.total_bank} pts</span>
+                </div>
+            `).join('');
+
+            // Update game info
+            document.getElementById('currentScore').textContent = state.turn_state.accumulated_score;
+            document.getElementById('diceRemaining').textContent = state.turn_state.dice_remaining;
+
+            // Update dice
+            const container = document.getElementById('diceContainer');
+            container.innerHTML = state.last_roll.map((d, i) => `
+                <div class="die" onclick="toggleDie(${i})">${d}</div>
+            `).join('');
+
+            // Enable/disable buttons
+            const canAct = isMyTurn && state.game_status === 'in_progress';
+            document.getElementById('rollBtn').disabled = !canAct;
+            document.getElementById('bankBtn').disabled = !canAct || state.turn_state.accumulated_score === 0;
+            document.getElementById('endTurnBtn').disabled = !canAct;
+
+            if (state.game_status === 'finished') {
+                const winner = state.players.find(p => p.is_winner);
+                alert(`Game Over! ${winner.name} wins with ${winner.total_bank} points!`);
+            }
+        }
+
+        function toggleDie(index) {
+            const die = document.querySelectorAll('.die')[index];
+            if (selectedDice.includes(index)) {
+                selectedDice = selectedDice.filter(i => i !== index);
+                die.classList.remove('selected');
+            } else {
+                selectedDice.push(index);
+                die.classList.add('selected');
+            }
+        }
+
+        async function rollDice() {
+            try {
+                const diceToKeep = selectedDice.map(i => gameState.last_roll[i]);
+                const res = await fetch(`/api/rooms/${roomId}/roll`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({player_id: playerId, dice_to_keep: diceToKeep})
+                });
+                const data = await res.json();
+                selectedDice = [];
+                updateGameState(data);
+                
+                if (data.turn_state.is_game_over) {
+                    alert('Farkle! You lost all points this turn.');
+                    await endTurn();
+                }
+            } catch (err) {
+                showError('gameError', err.message);
+            }
+        }
+
+        async function bankPoints() {
+            try {
+                const res = await fetch(`/api/rooms/${roomId}/bank`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({player_id: playerId})
+                });
+                const data = await res.json();
+                updateGameState(data);
+                await endTurn();
+            } catch (err) {
+                showError('gameError', err.message);
+            }
+        }
+
+        async function endTurn() {
+            try {
+                const res = await fetch(`/api/rooms/${roomId}/end-turn`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({player_id: playerId})
+                });
+                const data = await res.json();
+                selectedDice = [];
+                updateGameState(data);
+            } catch (err) {
+                showError('gameError', err.message);
+            }
+        }
+    </script>
+</body>
+</html>

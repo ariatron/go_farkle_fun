@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"farkle-app/internal/api"
+	"farkle-app/internal/game"
 	"farkle-app/internal/observability"
 	"fmt"
 	"net/http"
@@ -18,15 +19,58 @@ func main() {
 	// Initialize observability stack
 	initObservability()
 
+	// Get game mode from environment variable
+	gameMode := os.Getenv("GAME_MODE")
+	if gameMode == "" {
+		gameMode = "single" // Default to single-player
+	}
+
 	// Create router with middleware
 	mux := http.NewServeMux()
 
-	// API Routes
-	mux.HandleFunc("/api/roll", api.RollHandler)
-	mux.HandleFunc("/api/bank", api.BankHandler)
-	mux.HandleFunc("/api/reset", api.ResetHandler)
-	mux.HandleFunc("/api/set-player-name", api.SetPlayerNameHandler)
+	if gameMode == "multi" {
+		// Multiplayer mode: initialize room manager and multiplayer endpoints
+		observability.Logger.Info("🎮 Starting in MULTIPLAYER mode")
+		fmt.Println("🎮 Game Mode: MULTIPLAYER")
 
+		roomManager := game.NewRoomManager()
+
+		// Start background cleanup for stale rooms
+		go func() {
+			ticker := time.NewTicker(5 * time.Minute)
+			defer ticker.Stop()
+			for range ticker.C {
+				cleaned := roomManager.CleanupStaleRooms(30 * time.Minute)
+				if cleaned > 0 {
+					observability.Logger.Info("Cleaned up stale rooms", "count", cleaned)
+				}
+			}
+		}()
+
+		// Multiplayer API Routes
+		mux.HandleFunc("/api/rooms/create", api.CreateRoomHandler(roomManager))
+		mux.HandleFunc("/api/rooms/{roomId}/join", api.JoinRoomHandler(roomManager))
+		mux.HandleFunc("/api/rooms/{roomId}/start", api.StartGameHandler(roomManager))
+		mux.HandleFunc("/api/rooms/{roomId}/state", api.GetRoomStateHandler(roomManager))
+		mux.HandleFunc("/api/rooms/{roomId}/roll", api.MultiplayerRollHandler(roomManager))
+		mux.HandleFunc("/api/rooms/{roomId}/bank", api.MultiplayerBankHandler(roomManager))
+		mux.HandleFunc("/api/rooms/{roomId}/end-turn", api.EndTurnHandler(roomManager))
+		mux.HandleFunc("/api/rooms/{roomId}/leave", api.LeaveRoomHandler(roomManager))
+		mux.HandleFunc("/api/rooms", api.ListRoomsHandler(roomManager))
+
+	} else {
+		// Single-player mode: original endpoints
+		observability.Logger.Info("🎮 Starting in SINGLE-PLAYER mode")
+		fmt.Println("🎮 Game Mode: SINGLE-PLAYER")
+
+		// Single-player API Routes
+		mux.HandleFunc("/api/roll", api.RollHandler)
+		mux.HandleFunc("/api/bank", api.BankHandler)
+		mux.HandleFunc("/api/reset", api.ResetHandler)
+		mux.HandleFunc("/api/set-player-name", api.SetPlayerNameHandler)
+	}
+
+	// Common endpoints (available in both modes)
 	// Metrics endpoint
 	mux.Handle("/metrics", promhttp.Handler())
 

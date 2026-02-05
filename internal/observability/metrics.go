@@ -19,6 +19,12 @@ type Metrics struct {
 	GameWinsTotal     prometheus.Counter
 	ActiveGames       prometheus.Gauge
 	PointsDistribution *prometheus.HistogramVec
+
+	// Multiplayer Metrics (only used in multi mode)
+	ActiveRooms       prometheus.Gauge
+	PlayersOnline     prometheus.Gauge
+	RoomsCreatedTotal prometheus.Counter
+	RoomsFull        prometheus.Counter
 }
 
 // AppMetrics is the global metrics instance
@@ -91,12 +97,40 @@ func InitMetrics() {
 			},
 			[]string{"type"}, // type: "roll" or "bank"
 		),
+
+		// Multiplayer Metrics
+		ActiveRooms: promauto.NewGauge(
+			prometheus.GaugeOpts{
+				Name: "farkle_active_rooms",
+				Help: "Number of active game rooms (multiplayer mode)",
+			},
+		),
+		PlayersOnline: promauto.NewGauge(
+			prometheus.GaugeOpts{
+				Name: "farkle_players_online",
+				Help: "Total number of players in all rooms (multiplayer mode)",
+			},
+		),
+		RoomsCreatedTotal: promauto.NewCounter(
+			prometheus.CounterOpts{
+				Name: "farkle_rooms_created_total",
+				Help: "Total number of rooms created (multiplayer mode)",
+			},
+		),
+		RoomsFull: promauto.NewCounter(
+			prometheus.CounterOpts{
+				Name: "farkle_rooms_full_total",
+				Help: "Total number of times a room became full (multiplayer mode)",
+			},
+		),
 	}
 
-	// Initialize active games to 0
+	// Initialize gauges to 0
 	AppMetrics.ActiveGames.Set(0)
+	AppMetrics.ActiveRooms.Set(0)
+	AppMetrics.PlayersOnline.Set(0)
 
-	Logger.Info("Metrics initialized", "metrics_registered", "12")
+	Logger.Info("Metrics initialized", "metrics_registered", "16")
 }
 
 // RecordHTTPRequest records an HTTP request metric
