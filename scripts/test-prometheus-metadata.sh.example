@@ -1,0 +1,132 @@
+#!/bin/bash
+# Test Prometheus/Mimir Metadata API Endpoints against Grafana Cloud
+#
+# This script queries various metadata endpoints to explore your Farkle metrics
+# in Grafana Cloud using the Prometheus/Mimir API.
+#
+# Usage: ./scripts/test-prometheus-metadata.sh
+
+set -e
+
+# Colors for output
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+# Grafana Cloud Prometheus endpoint
+PROMETHEUS_URL="https://prometheus-YOUR-REGION.grafana.net/api/prom"
+USERNAME="YOUR_PROMETHEUS_USER_ID"
+PASSWORD="YOUR_GRAFANA_CLOUD_API_TOKEN"
+
+echo -e "${BLUE}========================================${NC}"
+echo -e "${BLUE}Prometheus/Mimir Metadata API Tests${NC}"
+echo -e "${BLUE}========================================${NC}\n"
+
+# Helper function to make authenticated requests
+query_api() {
+    local endpoint=$1
+    local description=$2
+
+    echo -e "${CYAN}${description}${NC}"
+    echo -e "${YELLOW}Endpoint: ${endpoint}${NC}\n"
+
+    curl -s -u "${USERNAME}:${PASSWORD}" \
+        "${PROMETHEUS_URL}${endpoint}" \
+        | jq '.' 2>/dev/null || echo "Error: Failed to parse JSON response"
+
+    echo -e "\n"
+}
+
+# 1. Get all metric names
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${GREEN}1. All Metric Names (__name__ label)${NC}"
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
+query_api "/api/v1/label/__name__/values" "Query: Get all metric names"
+
+# 2. Get all label names
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${GREEN}2. All Label Names${NC}"
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
+query_api "/api/v1/labels" "Query: Get all label names"
+
+# 3. Get values for specific labels
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${GREEN}3. Service Label Values${NC}"
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
+query_api "/api/v1/label/service/values" "Query: Get all 'service' label values"
+
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${GREEN}4. Job Label Values${NC}"
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
+query_api "/api/v1/label/job/values" "Query: Get all 'job' label values"
+
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${GREEN}5. Instance Label Values${NC}"
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
+query_api "/api/v1/label/instance/values" "Query: Get all 'instance' label values"
+
+# 4. Get series metadata for specific metrics
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${GREEN}6. Series Metadata (Farkle HTTP Requests)${NC}"
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
+query_api "/api/v1/series?match[]=farkle_http_requests_total" "Query: Get series for farkle_http_requests_total"
+
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${GREEN}7. Series Metadata (Farkle Game Rolls)${NC}"
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
+query_api "/api/v1/series?match[]=farkle_game_rolls_total" "Query: Get series for farkle_game_rolls_total"
+
+# 5. Get metric metadata (type, help, unit)
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${GREEN}8. Metric Metadata (Type, Help, Unit)${NC}"
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
+query_api "/api/v1/metadata?metric=farkle_http_requests_total" "Query: Get metadata for farkle_http_requests_total"
+
+# 6. Get all metrics with a specific label
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${GREEN}9. All Series for service=farkle-game${NC}"
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
+query_api '/api/v1/series?match[]={service="farkle-game"}' "Query: Get all series with service=farkle-game"
+
+# 7. Query label values with time range
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${GREEN}10. Endpoint Label Values (Last 1 Hour)${NC}"
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
+
+END_TIME=$(date +%s)
+START_TIME=$((END_TIME - 3600))  # 1 hour ago
+
+query_api "/api/v1/label/endpoint/values?start=${START_TIME}&end=${END_TIME}" \
+    "Query: Get 'endpoint' label values from last hour"
+
+# 8. K6 metrics (if available)
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${GREEN}11. K6 Metrics (if available)${NC}"
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
+query_api "/api/v1/series?match[]=k6_http_req_duration" "Query: Get K6 HTTP duration series"
+
+echo -e "${BLUE}========================================${NC}"
+echo -e "${BLUE}Testing Complete!${NC}"
+echo -e "${BLUE}========================================${NC}\n"
+
+echo -e "${CYAN}Additional Metadata API Endpoints:${NC}"
+echo ""
+echo -e "${YELLOW}Query Examples:${NC}"
+echo ""
+echo "# Get all metrics matching a pattern"
+echo "curl -u 'USER:PASS' '${PROMETHEUS_URL}/api/v1/label/__name__/values?match[]=farkle_*'"
+echo ""
+echo "# Get label values for metrics matching a pattern"
+echo "curl -u 'USER:PASS' '${PROMETHEUS_URL}/api/v1/label/endpoint/values?match[]=farkle_http_*'"
+echo ""
+echo "# Get series with multiple matchers"
+echo "curl -u 'USER:PASS' '${PROMETHEUS_URL}/api/v1/series?match[]={service=\"farkle-game\",endpoint=\"/api/roll\"}'"
+echo ""
+echo "# Get metadata for all metrics"
+echo "curl -u 'USER:PASS' '${PROMETHEUS_URL}/api/v1/metadata'"
+echo ""
+echo -e "${CYAN}Documentation:${NC}"
+echo "https://prometheus.io/docs/prometheus/latest/querying/api/#querying-metadata"
+echo ""

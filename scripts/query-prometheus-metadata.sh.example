@@ -1,0 +1,137 @@
+#!/bin/bash
+# Quick Prometheus/Mimir Metadata API queries for Grafana Cloud
+# Usage: ./scripts/query-prometheus-metadata.sh
+
+set -e
+
+# Grafana Cloud credentials
+PROM_URL="https://prometheus-YOUR-REGION.grafana.net/api/prom"
+PROM_USER="YOUR_PROMETHEUS_USER_ID"
+PROM_PASS="YOUR_GRAFANA_CLOUD_API_TOKEN"
+
+# Colors
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+echo -e "${BLUE}==================================${NC}"
+echo -e "${BLUE}Prometheus Metadata API Queries${NC}"
+echo -e "${BLUE}==================================${NC}\n"
+
+# 1. All Farkle metrics
+echo -e "${GREEN}1. Farkle Metric Names${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+curl -s -u "${PROM_USER}:${PROM_PASS}" \
+  "${PROM_URL}/api/v1/label/__name__/values" \
+  | jq -r '.data[] | select(startswith("farkle_"))' \
+  | sort
+echo ""
+
+# 2. All K6 metrics
+echo -e "${GREEN}2. K6 Metric Names${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+curl -s -u "${PROM_USER}:${PROM_PASS}" \
+  "${PROM_URL}/api/v1/label/__name__/values" \
+  | jq -r '.data[] | select(startswith("k6_"))' \
+  | sort
+echo ""
+
+# 3. All label names
+echo -e "${GREEN}3. All Label Names${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+curl -s -u "${PROM_USER}:${PROM_PASS}" \
+  "${PROM_URL}/api/v1/labels" \
+  | jq -r '.data[]' \
+  | sort
+echo ""
+
+# 4. Service label values
+echo -e "${GREEN}4. Service Label Values${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+curl -s -u "${PROM_USER}:${PROM_PASS}" \
+  "${PROM_URL}/api/v1/label/service/values" \
+  | jq -r '.data[]' 2>/dev/null || echo "No 'service' label found"
+echo ""
+
+# 5. Endpoint label values (from Farkle HTTP requests)
+echo -e "${GREEN}5. Endpoint Label Values${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+curl -s -u "${PROM_USER}:${PROM_PASS}" \
+  "${PROM_URL}/api/v1/label/endpoint/values" \
+  | jq -r '.data[]' 2>/dev/null | sort || echo "No 'endpoint' label found"
+echo ""
+
+# 6. Get series metadata for farkle_http_requests_total
+echo -e "${GREEN}6. Series for farkle_http_requests_total${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+curl -s -u "${PROM_USER}:${PROM_PASS}" \
+  "${PROM_URL}/api/v1/series?match[]=farkle_http_requests_total" \
+  | jq '.data'
+echo ""
+
+# 7. Get series metadata for farkle_game_rolls_total
+echo -e "${GREEN}7. Series for farkle_game_rolls_total${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+curl -s -u "${PROM_USER}:${PROM_PASS}" \
+  "${PROM_URL}/api/v1/series?match[]=farkle_game_rolls_total" \
+  | jq '.data'
+echo ""
+
+# 8. Get metric metadata (type, help, unit)
+echo -e "${GREEN}8. Metadata for farkle_http_requests_total${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+curl -s -u "${PROM_USER}:${PROM_PASS}" \
+  "${PROM_URL}/api/v1/metadata?metric=farkle_http_requests_total" \
+  | jq '.'
+echo ""
+
+# 9. Get all series for service=farkle-game
+echo -e "${GREEN}9. All Series with service=farkle-game${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+curl -s -u "${PROM_USER}:${PROM_PASS}" \
+  "${PROM_URL}/api/v1/series?match[]={service=\"farkle-game\"}" \
+  | jq '.data | length as $count | "Total series: \($count)"' -r
+echo ""
+
+# 10. Get K6 series count
+echo -e "${GREEN}10. K6 HTTP Request Duration Series${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+curl -s -u "${PROM_USER}:${PROM_PASS}" \
+  "${PROM_URL}/api/v1/series?match[]=k6_http_req_duration_p99" \
+  | jq '.data'
+echo ""
+
+echo -e "${BLUE}==================================${NC}"
+echo -e "${BLUE}Query Complete!${NC}"
+echo -e "${BLUE}==================================${NC}\n"
+
+echo -e "${YELLOW}Additional Query Examples:${NC}\n"
+
+echo "# Get all metrics matching a pattern"
+echo "curl -u '${PROM_USER}:***' \\"
+echo "  '${PROM_URL}/api/v1/label/__name__/values?match[]=farkle_*'"
+echo ""
+
+echo "# Get label values with time range (last hour)"
+echo "END=\$(date +%s)"
+echo "START=\$((END - 3600))"
+echo "curl -u '${PROM_USER}:***' \\"
+echo "  '${PROM_URL}/api/v1/label/endpoint/values?start=\${START}&end=\${END}'"
+echo ""
+
+echo "# Get series with multiple matchers"
+echo "curl -u '${PROM_USER}:***' \\"
+echo "  '${PROM_URL}/api/v1/series?match[]={service=\"farkle-game\",endpoint=\"/api/roll\"}'"
+echo ""
+
+echo "# Query actual metric values"
+echo "curl -u '${PROM_USER}:***' \\"
+echo "  '${PROM_URL}/api/v1/query?query=farkle_game_rolls_total'"
+echo ""
+
+echo "# Range query (last hour)"
+echo "curl -u '${PROM_USER}:***' \\"
+echo "  '${PROM_URL}/api/v1/query_range?query=rate(farkle_http_requests_total[5m])&start=\${START}&end=\${END}&step=60'"
+echo ""

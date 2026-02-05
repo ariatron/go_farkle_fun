@@ -52,3 +52,7 @@ data-alloy/
 
 # Logs directory
 logs/
+
+# Prometheus query scripts with credentials
+scripts/query-prometheus-metadata.sh
+scripts/test-prometheus-metadata.sh

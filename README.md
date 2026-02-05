@@ -379,6 +379,8 @@ For complete observability documentation, see:
 - **[K6 Metrics Guide](docs/K6_METRICS_GUIDE.md)** - K6 load testing with Grafana Cloud
 - **[K6 Tests README](tests/k6/README.md)** - K6 test scenarios and usage
 
+- **[Prometheus API Guide](docs/PROMETHEUS_API_GUIDE.md)** - Query metadata and metrics via HTTP API
+
 ## Future Enhancements
 
 - Multiplayer support with player turns
