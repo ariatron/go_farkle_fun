@@ -234,14 +234,32 @@ func SetPlayerNameHandler(w http.ResponseWriter, r *http.Request) {
 		oldName := currentGameState.PlayerName
 		currentGameState.PlayerName = req.PlayerName
 
-		observability.Logger.InfoContext(ctx, "Player name updated",
-			"old_name", oldName,
-			"new_name", req.PlayerName,
-		)
+		// Reset game state when name changes (new player = new game)
+		if oldName != "" && oldName != req.PlayerName {
+			currentGameState.TotalBank = 0
+			currentGameState.Winner = false
+			currentGameState.History = []int{}
+			currentGameState.Turn = game.NewTurn()
+			currentGameState.LastRoll = []int{}
 
-		span.SetAttributes(
-			attribute.String("player_name", req.PlayerName),
-		)
+			observability.Logger.InfoContext(ctx, "Player name changed - game reset",
+				"old_name", oldName,
+				"new_name", req.PlayerName,
+			)
+
+			span.SetAttributes(
+				attribute.String("player_name", req.PlayerName),
+				attribute.Bool("game_reset", true),
+			)
+		} else {
+			observability.Logger.InfoContext(ctx, "Player name set",
+				"player_name", req.PlayerName,
+			)
+
+			span.SetAttributes(
+				attribute.String("player_name", req.PlayerName),
+			)
+		}
 	}
 
 	renderJSON(w, currentGameState)
